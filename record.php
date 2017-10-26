@@ -59,8 +59,8 @@ class IndexController extends Controller {
 
     //上传到七牛云并转码
     private function transcode($filePath,$filename){     
-		    $accessKey = '';  //你的七牛云ak,七牛云后台获取
-		    $secretKey = '';  //你的七牛云sk
+	$accessKey = '';  //你的七牛云ak,七牛云后台获取
+	$secretKey = '';  //你的七牛云sk
 
         $auth = new Auth($accessKey, $secretKey); //七牛云权限验证
 
@@ -96,13 +96,13 @@ class IndexController extends Controller {
         //上传文件并转码$filePath为本地文件路径  
         list($ret, $err) = $uploadMgr->putFile($uptoken, $key, $filePath);    
         if ($err !== null) {
-			      return false;   
+		return false;   
         }else {
         	//此时七牛云中同一段音频文件有amr和MP3两个格式的两个文件同时存在    
 	        $bucketMgr = new BucketManager($auth);   
 	        //为节省空间,删除amr格式文件    
 	        $bucketMgr->delete($bucket, $key);
-			    return true;
+         	return true;
         }    
     }
 }
