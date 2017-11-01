@@ -11,7 +11,7 @@ use Qiniu\Storage\BucketManager;
 class IndexController extends Controller {
     //下载录音
     public function downloadRecord(){
-    	//参数,如何获取
+    	//参数
         $media_id = '前端jssdk上传录音到微信服务器后返回的serverid';
     	$token = '你的公众号全局access_token';
         
