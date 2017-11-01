@@ -5,8 +5,8 @@ use Think\Controller;
 //引入七牛云sdk，我使用的TP框架你可以根据自己的环境自行引入
 vendor('Qiniu.autoload');
 use Qiniu\Auth;  
-use Qiniu\Storage\UploadManager;
-use Qiniu\Storage\BucketManager;
+use Qiniu\Storage\UploadManager;//上传文件类
+use Qiniu\Storage\BucketManager;//空间管理类,如果不删除七牛云空间文件,则不需要引入
 
 class IndexController extends Controller {
     //下载录音
@@ -23,9 +23,8 @@ class IndexController extends Controller {
 
         $download = $this->downAndSaveFile($url,$filePath); //下载录音
 
-        if ($download) {
-        	$response = array('status'=>1,'info'=>'从微信服务器下载文件成功');
-        	//上传七牛并转换格式
+        if ($download) {//从微信服务器下载录音成功
+        	//上传到七牛并转换格式
         	$transcode = $this->transcode($filePath,$filename);
         	if ($transcode) {
         		$response = array('status'=>1,'info'=>'上传并转码成功');
@@ -60,22 +59,23 @@ class IndexController extends Controller {
     //上传到七牛云并转码
     private function transcode($filePath,$filename){     
 	$accessKey = '';  //你的七牛云ak,七牛云后台获取
-	$secretKey = '';  //你的七牛云sk
+	$secretKey = '';  //你的七牛云sk,同上
 
         $auth = new Auth($accessKey, $secretKey); //七牛云权限验证
 
         $reply = array(
         	'bucket'=>'',//你的七牛云空间
-        	'pipeline'=>'',//你的七牛云队列,如果不适用私有队列，可以不设置
+        	'pipeline'=>'',//你的七牛云队列,如果不使用私有队列，可以不设置,建议创建私有队列
         );
+	//数据保存的七牛云空间名
         $bucket = trim($reply['bucket']);
         //数据处理队列名称,不设置代表不使用私有队列，使用公有队列。    
         $pipeline = trim($reply['pipeline']);    
         //通过添加'|saveas'参数，指定处理后的文件保存的bucket和key    
-        //不指定默认保存在当前空间，bucket为目标空间，后一个参数为转码之后文件名     
+        //不指定空间的话默认保存在当前空间，bucket为目标空间，后一个参数为转码之后文件名     
         $savekey = \Qiniu\base64_urlSafeEncode($bucket.':'.$filename.'.mp3');    
         //设置转码参数    
-        $fops = "avthumb/mp3/ab/64k/ar/44100/acodec/libmp3lame";  
+        $fops = "avthumb/mp3/ab/128k/ar/44100/acodec/libmp3lame";  
         $fops = $fops.'|saveas/'.$savekey;    
         if(!empty($pipeline)){
             $policy = array(
@@ -96,13 +96,13 @@ class IndexController extends Controller {
         //上传文件并转码$filePath为本地文件路径  
         list($ret, $err) = $uploadMgr->putFile($uptoken, $key, $filePath);    
         if ($err !== null) {
-		return false;   
+		return false;
         }else {
-        	//此时七牛云中同一段音频文件有amr和MP3两个格式的两个文件同时存在    
-	        $bucketMgr = new BucketManager($auth);   
-	        //为节省空间,删除amr格式文件    
-	        $bucketMgr->delete($bucket, $key);
+        	//此时七牛云中同一段音频文件有amr和MP3两个格式的两个文件同时存在,不想保留.amr,可以删除   
+	        //$bucketMgr = new BucketManager($auth);   
+	        //为节省空间,删除amr格式文件 
+	        //$bucketMgr->delete($bucket, $key);
          	return true;
-        }    
+        }
     }
 }
